@@ -1,4 +1,4 @@
-  import { assign, vary } from '../deps.ts';
+  import { assign, vary } from './deps.ts';
 
   var defaults = {
     origin: '*',
