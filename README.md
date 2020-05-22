@@ -4,7 +4,7 @@ A fork of expressjs/cors but for deno, deno-express middleware that can be used 
 
 ## Import
 
-import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/lib//mod.ts";
+import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/mod.ts";
 
 ## Usage
 
@@ -12,7 +12,7 @@ import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/lib/
 
 ```typescript
 import { App } from "https://raw.githubusercontent.com/NMathar/deno-express/master/mod.ts";
-import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/lib/mod.ts";
+import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/mod.ts";
 var app = new App();
 
 app.use(cors());
@@ -29,7 +29,7 @@ console.log("app listening on port " + server.port);
 
 ```typescript
 import { App } from "https://raw.githubusercontent.com/NMathar/deno-express/master/mod.ts";
-import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/lib/mod.ts";
+import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/mod.ts";
 var app = new App();
 
 var corsOptions = {
@@ -82,7 +82,7 @@ server.ts File
 
 ```
 import * as expressive from "https://raw.githubusercontent.com/NMathar/deno-express/master/mod.ts";
-import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/lib/mod.ts";
+import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/mod.ts";
 
 (async () => {
   const port = 3000;
