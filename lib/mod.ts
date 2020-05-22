@@ -1,9 +1,4 @@
-(function () {
-
-  'use strict';
-
-  var assign = require('object-assign');
-  var vary = require('vary');
+  import { assign, vary } from '../deps.ts';
 
   var defaults = {
     origin: '*',
@@ -12,11 +7,13 @@
     optionsSuccessStatus: 204
   };
 
-  function isString(s) {
+  type Action = string | any;
+
+  function isString(s: Action) {
     return typeof s === 'string' || s instanceof String;
   }
 
-  function isOriginAllowed(origin, allowedOrigin) {
+  function isOriginAllowed(origin: string, allowedOrigin: Action) {
     if (Array.isArray(allowedOrigin)) {
       for (var i = 0; i < allowedOrigin.length; ++i) {
         if (isOriginAllowed(origin, allowedOrigin[i])) {
@@ -33,7 +30,7 @@
     }
   }
 
-  function configureOrigin(options, req) {
+  function configureOrigin(options: any, req: any) {
     var requestOrigin = req.headers.origin,
       headers = [],
       isAllowed;
@@ -70,7 +67,7 @@
     return headers;
   }
 
-  function configureMethods(options) {
+  function configureMethods(options: any) {
     var methods = options.methods;
     if (methods.join) {
       methods = options.methods.join(','); // .methods is an array, so turn it into a string
@@ -81,7 +78,7 @@
     };
   }
 
-  function configureCredentials(options) {
+  function configureCredentials(options: any) {
     if (options.credentials === true) {
       return {
         key: 'Access-Control-Allow-Credentials',
@@ -91,7 +88,7 @@
     return null;
   }
 
-  function configureAllowedHeaders(options, req) {
+  function configureAllowedHeaders(options: any, req: any) {
     var allowedHeaders = options.allowedHeaders || options.headers;
     var headers = [];
 
@@ -114,7 +111,7 @@
     return headers;
   }
 
-  function configureExposedHeaders(options) {
+  function configureExposedHeaders(options: any) {
     var headers = options.exposedHeaders;
     if (!headers) {
       return null;
@@ -130,7 +127,7 @@
     return null;
   }
 
-  function configureMaxAge(options) {
+  function configureMaxAge(options: any) {
     var maxAge = (typeof options.maxAge === 'number' || options.maxAge) && options.maxAge.toString()
     if (maxAge && maxAge.length) {
       return {
@@ -141,7 +138,7 @@
     return null;
   }
 
-  function applyHeaders(headers, res) {
+  function applyHeaders(headers: any, res: any) {
     for (var i = 0, n = headers.length; i < n; i++) {
       var header = headers[i];
       if (header) {
@@ -150,24 +147,25 @@
         } else if (header.key === 'Vary' && header.value) {
           vary(res, header.value);
         } else if (header.value) {
-          res.setHeader(header.key, header.value);
+          res.headers.append(header.key, header.value);
+          //res.setHeader(header.key, header.value);
         }
       }
     }
   }
 
-  function cors(options, req, res, next) {
+  function cors(options: any, req: any, res: any, next: any) {
     var headers = [],
       method = req.method && req.method.toUpperCase && req.method.toUpperCase();
 
     if (method === 'OPTIONS') {
       // preflight
       headers.push(configureOrigin(options, req));
-      headers.push(configureCredentials(options, req));
-      headers.push(configureMethods(options, req));
+      headers.push(configureCredentials(options));
+      headers.push(configureMethods(options));
       headers.push(configureAllowedHeaders(options, req));
-      headers.push(configureMaxAge(options, req));
-      headers.push(configureExposedHeaders(options, req));
+      headers.push(configureMaxAge(options));
+      headers.push(configureExposedHeaders(options));
       applyHeaders(headers, res);
 
       if (options.preflightContinue) {
@@ -176,32 +174,33 @@
         // Safari (and potentially other browsers) need content-length 0,
         //   for 204 or they just hang waiting for a body
         res.statusCode = options.optionsSuccessStatus;
-        res.setHeader('Content-Length', '0');
+        res.headers.append('Content-Length', '0');
+        //res.setHeader('Content-Length', '0');
         res.end();
       }
     } else {
       // actual response
       headers.push(configureOrigin(options, req));
-      headers.push(configureCredentials(options, req));
-      headers.push(configureExposedHeaders(options, req));
+      headers.push(configureCredentials(options));
+      headers.push(configureExposedHeaders(options));
       applyHeaders(headers, res);
       next();
     }
   }
 
-  function middlewareWrapper(o) {
+  function middlewareWrapper(options: any = {}) {
     // if options are static (either via defaults or custom options passed in), wrap in a function
-    var optionsCallback = null;
-    if (typeof o === 'function') {
-      optionsCallback = o;
+    var optionsCallback: any = null;
+    if (typeof options === 'function') {
+      optionsCallback = options;
     } else {
-      optionsCallback = function (req, cb) {
-        cb(null, o);
+      optionsCallback = function (req: any, cb: any) {
+        cb(null, options);
       };
     }
 
-    return function corsMiddleware(req, res, next) {
-      optionsCallback(req, function (err, options) {
+    return async function corsMiddleware(req: any, res: any, next: any) {
+      optionsCallback(req, function (err: any, options: any) {
         if (err) {
           next(err);
         } else {
@@ -210,13 +209,13 @@
           if (corsOptions.origin && typeof corsOptions.origin === 'function') {
             originCallback = corsOptions.origin;
           } else if (corsOptions.origin) {
-            originCallback = function (origin, cb) {
+            originCallback = function (origin: any, cb: any) {
               cb(null, corsOptions.origin);
             };
           }
 
           if (originCallback) {
-            originCallback(req.headers.origin, function (err2, origin) {
+            originCallback(req.headers.origin, function (err2: any, origin: any) {
               if (err2 || !origin) {
                 next(err2);
               } else {
@@ -233,6 +232,4 @@
   }
 
   // can pass either an options hash, an options delegate, or nothing
-  module.exports = middlewareWrapper;
-
-}());
+  export default middlewareWrapper;

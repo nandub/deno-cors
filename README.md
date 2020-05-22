@@ -1,192 +1,50 @@
-# cors
+# deno-cors
 
-[![NPM Version][npm-image]][npm-url]
-[![NPM Downloads][downloads-image]][downloads-url]
-[![Build Status][travis-image]][travis-url]
-[![Test Coverage][coveralls-image]][coveralls-url]
+A fork of expressjs/cors but for deno, deno-express middleware that can be used to enable [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing) with various options.
 
-CORS is a node.js package for providing a [Connect](http://www.senchalabs.org/connect/)/[Express](http://expressjs.com/) middleware that can be used to enable [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing) with various options.
+## Import
 
-**[Follow me (@troygoode) on Twitter!](https://twitter.com/intent/user?screen_name=troygoode)**
-
-* [Installation](#installation)
-* [Usage](#usage)
-  * [Simple Usage](#simple-usage-enable-all-cors-requests)
-  * [Enable CORS for a Single Route](#enable-cors-for-a-single-route)
-  * [Configuring CORS](#configuring-cors)
-  * [Configuring CORS w/ Dynamic Origin](#configuring-cors-w-dynamic-origin)
-  * [Enabling CORS Pre-Flight](#enabling-cors-pre-flight)
-  * [Configuring CORS Asynchronously](#configuring-cors-asynchronously)
-* [Configuration Options](#configuration-options)
-* [Demo](#demo)
-* [License](#license)
-* [Author](#author)
-
-## Installation
-
-This is a [Node.js](https://nodejs.org/en/) module available through the
-[npm registry](https://www.npmjs.com/). Installation is done using the
-[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
-
-```sh
-$ npm install cors
-```
+import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/lib//mod.ts";
 
 ## Usage
 
 ### Simple Usage (Enable *All* CORS Requests)
 
-```javascript
-var express = require('express')
-var cors = require('cors')
-var app = express()
+```typescript
+import { App } from "https://raw.githubusercontent.com/NMathar/deno-express/master/mod.ts";
+import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/lib/mod.ts";
+var app = new App();
 
-app.use(cors())
+app.use(cors());
 
-app.get('/products/:id', function (req, res, next) {
-  res.json({msg: 'This is CORS-enabled for all origins!'})
-})
+app.get('/products/:id', async (req, res) => {
+  await res.json({msg: 'This is CORS-enabled for all origins!'})
+});
 
-app.listen(80, function () {
-  console.log('CORS-enabled web server listening on port 80')
-})
-```
-
-### Enable CORS for a Single Route
-
-```javascript
-var express = require('express')
-var cors = require('cors')
-var app = express()
-
-app.get('/products/:id', cors(), function (req, res, next) {
-  res.json({msg: 'This is CORS-enabled for a Single Route'})
-})
-
-app.listen(80, function () {
-  console.log('CORS-enabled web server listening on port 80')
-})
+const server = await app.listen(3000);
+console.log("app listening on port " + server.port);
 ```
 
 ### Configuring CORS
 
-```javascript
-var express = require('express')
-var cors = require('cors')
-var app = express()
+```typescript
+import { App } from "https://raw.githubusercontent.com/NMathar/deno-express/master/mod.ts";
+import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/lib/mod.ts";
+var app = new App();
 
 var corsOptions = {
-  origin: 'http://example.com',
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-}
+   origin: 'http://example.com',
+   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
 
-app.get('/products/:id', cors(corsOptions), function (req, res, next) {
-  res.json({msg: 'This is CORS-enabled for only example.com.'})
-})
+app.use(cors(corsOptions));
 
-app.listen(80, function () {
-  console.log('CORS-enabled web server listening on port 80')
-})
-```
+app.get('/products/:id', async (req, res) => {
+  await res.json({msg: 'This is CORS-enabled for all origins!'})
+});
 
-### Configuring CORS w/ Dynamic Origin
-
-This module supports validating the origin dynamically using a function provided
-to the `origin` option. This function will be passed a string that is the origin
-(or `undefined` if the request has no origin), and a `callback` with the signature
-`callback(error, origin)`.
-
-The `origin` argument to the callback can be any value allowed for the `origin`
-option of the middleware, except a function. See the
-[confugration options](#configuration-options) section for more information on all
-the possible value types.
-
-This function is designed to allow the dynamic loading of allowed origin(s) from
-a backing datasource, like a database.
-
-```javascript
-var express = require('express')
-var cors = require('cors')
-var app = express()
-
-var corsOptions = {
-  origin: function (origin, callback) {
-    // db.loadOrigins is an example call to load
-    // a list of origins from a backing database
-    db.loadOrigins(function (error, origins) {
-      callback(error, origins)
-    })
-  }
-}
-
-app.get('/products/:id', cors(corsOptions), function (req, res, next) {
-  res.json({msg: 'This is CORS-enabled for a whitelisted domain.'})
-})
-
-app.listen(80, function () {
-  console.log('CORS-enabled web server listening on port 80')
-})
-```
-
-### Enabling CORS Pre-Flight
-
-Certain CORS requests are considered 'complex' and require an initial
-`OPTIONS` request (called the "pre-flight request"). An example of a
-'complex' CORS request is one that uses an HTTP verb other than
-GET/HEAD/POST (such as DELETE) or that uses custom headers. To enable
-pre-flighting, you must add a new OPTIONS handler for the route you want
-to support:
-
-```javascript
-var express = require('express')
-var cors = require('cors')
-var app = express()
-
-app.options('/products/:id', cors()) // enable pre-flight request for DELETE request
-app.del('/products/:id', cors(), function (req, res, next) {
-  res.json({msg: 'This is CORS-enabled for all origins!'})
-})
-
-app.listen(80, function () {
-  console.log('CORS-enabled web server listening on port 80')
-})
-```
-
-You can also enable pre-flight across-the-board like so:
-
-```javascript
-app.options('*', cors()) // include before other routes
-```
-
-NOTE: When using this middleware as an application level middleware (for
-example, `app.use(cors())`), pre-flight requests are already handled for all
-routes.
-
-### Configuring CORS Asynchronously
-
-```javascript
-var express = require('express')
-var cors = require('cors')
-var app = express()
-
-var whitelist = ['http://example1.com', 'http://example2.com']
-var corsOptionsDelegate = function (req, callback) {
-  var corsOptions;
-  if (whitelist.indexOf(req.header('Origin')) !== -1) {
-    corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
-  } else {
-    corsOptions = { origin: false } // disable CORS for this request
-  }
-  callback(null, corsOptions) // callback expects two parameters: error and options
-}
-
-app.get('/products/:id', cors(corsOptionsDelegate), function (req, res, next) {
-  res.json({msg: 'This is CORS-enabled for a whitelisted domain.'})
-})
-
-app.listen(80, function () {
-  console.log('CORS-enabled web server listening on port 80')
-})
+const server = await app.listen(3000);
+console.log("app listening on port " + server.port);
 ```
 
 ## Configuration Options
@@ -218,14 +76,36 @@ The default configuration is the equivalent of:
 
 For details on the effect of each CORS header, read [this](http://www.html5rocks.com/en/tutorials/cors/) article on HTML5 Rocks.
 
-## Demo
+## Example
 
-A demo that illustrates CORS working (and not working) using React is available here: [https://node-cors-client.netlify.com](https://node-cors-client.netlify.com)
+server.ts File
 
-Code for that demo can be found here:
+```
+import * as expressive from "https://raw.githubusercontent.com/NMathar/deno-express/master/mod.ts";
+import cors from "https://raw.githubusercontent.com/nandub/deno-cors/master/lib/mod.ts";
 
-* Client: [https://github.com/troygoode/node-cors-client](https://github.com/troygoode/node-cors-client)
-* Server: [https://github.com/troygoode/node-cors-server](https://github.com/troygoode/node-cors-server)
+(async () => {
+  const port = 3000;
+  const app = new expressive.App();
+  app.use(expressive.simpleLog());
+  app.use(expressive.static_("./public"));
+  app.use(expressive.bodyParser.json());
+  app.use(cors());
+  app.get("/api/todos", async (req, res) => {
+    await res.json([{ name: "Buy some milk" }]);
+  });
+  // route with dynamic parameter
+  app.get("/api/user/{user_id}", async (req, res) => {
+    await res.json([{ id: req.params.user_id, name: "Jim Doe", phone: "12425323" }]);
+  });
+  const server = await app.listen(port);
+  console.log("app listening on port " + server.port);
+})();
+```
+
+## Start app
+
+`deno run --allow-net --allow-read server.ts`
 
 ## License
 
@@ -233,13 +113,8 @@ Code for that demo can be found here:
 
 ## Author
 
+Nodejs CORS
 [Troy Goode](https://github.com/TroyGoode) ([troygoode@gmail.com](mailto:troygoode@gmail.com))
 
-[coveralls-image]: https://img.shields.io/coveralls/expressjs/cors/master.svg
-[coveralls-url]: https://coveralls.io/r/expressjs/cors?branch=master
-[downloads-image]: https://img.shields.io/npm/dm/cors.svg
-[downloads-url]: https://npmjs.org/package/cors
-[npm-image]: https://img.shields.io/npm/v/cors.svg
-[npm-url]: https://npmjs.org/package/cors
-[travis-image]: https://img.shields.io/travis/expressjs/cors/master.svg
-[travis-url]: https://travis-ci.org/expressjs/cors
+Deno CORS, works with deno-express
+[Fernando Ortiz](https://github.com/nandub) ([nandub@nandub.info](mailto:nandub@nandub.info))
